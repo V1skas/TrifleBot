@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+aiogram = "3.13"
+pydantic = "2.8"
+pydantic-settings = "2.6"
+sqlalchemy = "2.0"
+alembic = "1.13"
+aiomysql = "*"
+pymysql = "*"
+aiohttp = "*"
+logger = "*"
+
+[dev-packages]
+pyright = "*"
+
+[requires]
+python_version = "3.11"
+python_full_version = "3.11.10"
