@@ -22,7 +22,7 @@ logger.addHandler(handler)
 
 async def main():
     logger.info("Init core module..")
-    core = CoreModule()
+    core = CoreModule(host=settings.SERVER_IP, port=settings.SERVER_PORT)
     logger.info("Init database module..")
     dbm = DatabaseModule()
     logger.info("Init father bot..")

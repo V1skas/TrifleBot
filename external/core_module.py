@@ -94,6 +94,15 @@ class CoreModule:
         print(task_result)
         client_ip: str = str(request.remote)
 
+        for item in self.Recipients:
+            if client_ip not in item.value:
+                logger.info(f"[INFO][CoreModule] get_tasks operation denied for: {client_ip}")
+                return web.json_response({CoreModuleResponseData.success: False,
+                                          CoreModuleResponseData.err_code: ListErrors.operation_denied,
+                                          CoreModuleResponseData.message: "Operation denied!"})
+            else:
+                client_ip = item.name
+
         if not isinstance(task_result, dict):
             logger.warning("Invalid request format!")
             return web.json_response({CoreModuleResponseData.success: False,
@@ -216,5 +225,5 @@ class CoreModule:
         await runner.setup()
         site = web.TCPSite(runner, self.host, self.port)
         await site.start()
-        logger.info("HTTP сервер запущен на http://localhost:8080")
+        logger.info(f"HTTP сервер запущен на http://{self.host}:{self.port}")
 

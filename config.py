@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     TOKEN_TG_BOT: str
     TOKEN_VB_BOT: str
     BOSS_IP: list[str]
+    SERVER_IP: str
+    SERVER_PORT: int
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -25,6 +27,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 if __name__ == "__main__":
+    print(f"SERVER_IP => {settings.BOSS_IP}")
+    print(f"SERVER_PORT => {settings.BOSS_IP}\n")
     print(f"DB_USER => {settings.DB_USER}")
     print(f"DB_PASSWORD => {settings.DB_PASSWORD}")
     print(f"DB_HOST => {settings.DB_HOST}")
