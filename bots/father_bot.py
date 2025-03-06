@@ -295,7 +295,7 @@ class FatherBot(CoreModuleLisener):
 
         orders_menu: List[MenuItem] = menu_items[MenuPages.orders].copy()
         for number in data["orders_numbers"]:
-            orders_menu.insert(0, MenuItem(number[0], self.sessions[session_id][Session.Columns.CURRENT_ACTION]))
+            orders_menu.insert(0, MenuItem(number, self.sessions[session_id][Session.Columns.CURRENT_ACTION]))
         await self.bots[session_provider].send(session_id, "Оберіть номер договору у меню", orders_menu)
         self.sessions[session_id][Session.Columns.CURRENT_MENU] = MenuPages.orders
         self.sessions[session_id][Session.Columns.CURRENT_STATE] = SessionStates.waiting_user_input
@@ -324,7 +324,7 @@ class FatherBot(CoreModuleLisener):
 
         orders_menu: List[MenuItem] = menu_items[MenuPages.services].copy()
         for number in data["services_id"]:
-            orders_menu.insert(0, MenuItem(number[0], self.sessions[session_id][Session.Columns.CURRENT_ACTION]))
+            orders_menu.insert(0, MenuItem(number, self.sessions[session_id][Session.Columns.CURRENT_ACTION]))
         await self.bots[session_provider].send(session_id, "Оберіть id сервісу/пакету у меню", orders_menu)
         self.sessions[session_id][Session.Columns.CURRENT_MENU] = MenuPages.services
         self.sessions[session_id][Session.Columns.CURRENT_STATE] = SessionStates.waiting_user_input

@@ -1,5 +1,5 @@
 from asyncio import sleep
-from time import time
+import uuid
 
 from aiohttp import web
 from enum import StrEnum, Enum
@@ -17,7 +17,7 @@ logger = logging.getLogger()
 
 
 def generate_id():
-    return str(int(time() * 1000))
+    return str(uuid.uuid1())
 
 
 class CoreModule:
@@ -202,7 +202,7 @@ class CoreModule:
     async def add_task(self, recipient: Recipients, task: Dict[str, Any]):
         logger.info("[INFO][CoreModule] Call add_task")
         task[TaskData.id] = generate_id()
-        if recipient in self.tasks_list:
+        if recipient.name in self.tasks_list:
             self.tasks_list[recipient.name].append(task)
         else:
             self.tasks_list[recipient.name] = [task]
