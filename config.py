@@ -1,5 +1,6 @@
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
 
 
 class Settings(BaseSettings):
@@ -10,7 +11,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     TOKEN_TG_BOT: str
     TOKEN_VB_BOT: str
-    BOSS_IP: str
+    BOSS_IP: list[str]
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -32,3 +33,4 @@ if __name__ == "__main__":
     print(f"DB_URL => {settings.get_db_url()}")
     print(f"TOKEN_TG_BOT =>  {settings.TOKEN_TG_BOT}")
     print(f"TOKEN_VB_BOT => {settings.TOKEN_VB_BOT}")
+    print(f"BOSS_IP => {settings.BOSS_IP}")

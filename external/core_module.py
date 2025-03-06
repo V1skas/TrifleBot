@@ -2,7 +2,7 @@ from asyncio import sleep
 from time import time
 
 from aiohttp import web
-from enum import StrEnum
+from enum import StrEnum, Enum
 from typing import Any, Dict, List
 
 from config import settings
@@ -21,7 +21,7 @@ def generate_id():
 
 
 class CoreModule:
-    class Recipients(StrEnum):
+    class Recipients(Enum):
         BOSS = settings.BOSS_IP
 
     host: str
@@ -47,11 +47,15 @@ class CoreModule:
         logger.info("[INFO][CoreModule] Call handle_get_tasks")
         client_ip: str = str(request.remote)
 
-        if client_ip not in self.Recipients._value2member_map_:
-            logger.info(f"[INFO][CoreModule] get_tasks operation denied for: {client_ip}")
-            return web.json_response({CoreModuleResponseData.success: False,
-                                      CoreModuleResponseData.err_code: ListErrors.operation_denied,
-                                      CoreModuleResponseData.message: "Operation denied!"})
+        for item in self.Recipients:
+            if client_ip not in item.value:
+                logger.info(f"[INFO][CoreModule] get_tasks operation denied for: {client_ip}")
+                return web.json_response({CoreModuleResponseData.success: False,
+                                          CoreModuleResponseData.err_code: ListErrors.operation_denied,
+                                          CoreModuleResponseData.message: "Operation denied!"})
+            else:
+                client_ip = item.name
+
 
         count = request.query.get(str(RequestArgsNames.count_task), None)
 
@@ -145,10 +149,14 @@ class CoreModule:
         logger.info("[INFO][CoreModule] Call handle_send")
         client_ip: str = str(request.remote)
 
-        if client_ip not in self.Recipients._value2member_map_:
-            return web.json_response({CoreModuleResponseData.success: False,
-                                      CoreModuleResponseData.err_code: ListErrors.operation_denied,
-                                      CoreModuleResponseData.message: "Operation denied!"})
+        for item in self.Recipients:
+            if client_ip not in item.value:
+                logger.info(f"[INFO][CoreModule] get_tasks operation denied for: {client_ip}")
+                return web.json_response({CoreModuleResponseData.success: False,
+                                          CoreModuleResponseData.err_code: ListErrors.operation_denied,
+                                          CoreModuleResponseData.message: "Operation denied!"})
+            else:
+                client_ip = item.name
 
         data = await request.json()
 
@@ -182,13 +190,13 @@ class CoreModule:
                                       CoreModuleResponseData.err_code: ListErrors.undedined_err,
                                       CoreModuleResponseData.message: "Undefined error."})
 
-    async def add_task(self, recipient: str, task: Dict[str, Any]):
+    async def add_task(self, recipient: Recipients, task: Dict[str, Any]):
         logger.info("[INFO][CoreModule] Call add_task")
         task[TaskData.id] = generate_id()
         if recipient in self.tasks_list:
-            self.tasks_list[recipient].append(task)
+            self.tasks_list[recipient.name].append(task)
         else:
-            self.tasks_list[recipient] = [task]
+            self.tasks_list[recipient.name] = [task]
         logger.info(f"[INFO][CoreModule] New task:\n{task}")
 
     async def handle_check_work(self, request):

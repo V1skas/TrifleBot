@@ -12,7 +12,6 @@ alembic = "1.13"
 aiomysql = "*"
 pymysql = "*"
 aiohttp = "*"
-logger = "*"
 
 [dev-packages]
 pyright = "*"
