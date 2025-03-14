@@ -113,10 +113,10 @@ class CoreModule:
 
         task: Dict[str, Any] = {}
 
-#        try:
         task = self.get_task_by_id(task_result[TaskResultData.id], client_ip)
 
         if task is None:
+            await self.bot.send_err(task[TaskData.id_session])
             logger.warning("Invalid id task.")
             return web.json_response({CoreModuleResponseData.success: False,
                                       CoreModuleResponseData.data: task_result,
@@ -208,17 +208,10 @@ class CoreModule:
             self.tasks_list[recipient.name] = [task]
         logger.info(f"[INFO][CoreModule] New task:\n{task}")
 
-    async def handle_check_work(self, request):
-        logger.info("Core module work!")
-        await self.bot.check_work()
-        return web.json_response({CoreModuleResponseData.success: True,
-                                  CoreModuleResponseData.task_in_queue: len(self.tasks_list.get(str(request.remote), []))})
-
     def _setup_routes(self):
         self.app.router.add_get('/core/tasks', self.handle_get_tasks)
         self.app.router.add_post('/core/tasks', self.handle_task_complete)
         self.app.router.add_post('/core/send', self.handle_send)
-        self.app.router.add_get('/core/check_work', self.handle_check_work)
 
     async def run(self):
         runner = web.AppRunner(self.app)

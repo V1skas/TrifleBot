@@ -1,7 +1,6 @@
 from typing import Any, TypeVar, Generic, List, Dict
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.base import Base
 

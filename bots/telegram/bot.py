@@ -1,8 +1,7 @@
-from functools import wraps
-
 from bots.base import AbstractBot, MenuItem
 from bots.father_bot import FatherBot
 from declarative_data.datasets import SessionProviders, UserActions, BotsData
+from database.models import Session
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
@@ -25,8 +24,6 @@ dp: Dispatcher = Dispatcher()
 bot: Bot
 father: FatherBot
 
-user_keys_map: Dict[str, Dict[str, int]] = {}
-
 
 class TelegramBot(AbstractBot):
     session_provider = int(SessionProviders.telegram)
@@ -38,35 +35,39 @@ class TelegramBot(AbstractBot):
         bot = Bot(token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
         father = fa
 
+
     async def run(self):
         global dp
         global bot
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
 
+
     async def send(self, session_id: str, msg: str, menu: List[MenuItem]):
         global bot
-        global user_keys_map
+        global father
         if len(menu) > 0:
             builder = ReplyKeyboardBuilder()
-            if user_keys_map.get(session_id, None) is not None:
-                user_keys_map[session_id].clear()
+            if father.sessions[session_id].get(Session.Columns.USER_KEYS_MAP) is not None:
+                father.sessions[session_id][Session.Columns.USER_KEYS_MAP].clear()
             else:
-                user_keys_map[session_id] = {}
+                father.sessions[session_id][Session.Columns.USER_KEYS_MAP] = {}
             for item in menu:
                 builder.add(types.KeyboardButton(text=item.name))
-                user_keys_map[session_id][item.name] = item.index
+                father.sessions[session_id][Session.Columns.USER_KEYS_MAP][item.name] = item.index
             builder.adjust(2)
             global bot
             await bot.send_message(session_id, msg, reply_markup=builder.as_markup(resize_keyboard=True))
+            await father.dbm.update_user_keys_map(session_id, father.sessions[session_id][Session.Columns.USER_KEYS_MAP])
         else:
             await bot.send_message(session_id, msg)
 
 
 @dp.message(Command("start"))
 async def com_start(message: Message):
-    global user_keys_map
-    user_keys_map[str(message.from_user.id)] = {}
+    global father
+    father.sessions[str(message.from_user.id)][Session.Columns.USER_KEYS_MAP] = {}
+    await father.dbm.update_user_keys_map(str(message.from_user.id), father.sessions[str(message.from_user.id)][Session.Columns.USER_KEYS_MAP])
     keyboard = ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text="Далі",
                                                                    request_contact=True)]], resize_keyboard=True)
     await message.answer("Для роботи з ботом підтримки Трайфл, необхідно підтвердити Ваші контактні дані "
@@ -117,13 +118,12 @@ async def com_balances(message: Message):
 
 @dp.message(F.text)
 async def com_some_text(message: Message):
-    global user_keys_map
-    if user_keys_map[str(message.from_user.id)].get(message.text, None) is None:
+    global father
+    if father.sessions[str(message.from_user.id)][Session.Columns.USER_KEYS_MAP].get(message.text, None) is None:
         await message.answer("Невідома команда.")
         return
 
-    global father
-    await father.exec_user_action(MenuItem(str(message.text), user_keys_map[str(message.from_user.id)][message.text]),
+    await father.exec_user_action(MenuItem(str(message.text), father.sessions[str(message.from_user.id)][Session.Columns.USER_KEYS_MAP][message.text]),
                                   str(message.from_user.id),
                                   SessionProviders.telegram,
                                   {})
