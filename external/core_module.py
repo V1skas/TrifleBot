@@ -10,6 +10,7 @@ from declarative_data.datasets import CoreModuleResponseData, ListErrors, Reques
     MessageData, MessageType
 
 from external.core_module_lisener import CoreModuleLisener
+from database.models import Task
 
 import logging
 from logging import warn, info, error
@@ -37,9 +38,21 @@ class CoreModule:
         self.app = web.Application()
         self._setup_routes()
 
-    def get_task_by_id(self, id: str, recipient: str):
+    async def load_tasks(self):
+        list_tasks: List[Task] = await self.bot.dbm.get_all_tasks()
+        for task in list_tasks:
+            new_task = task.dict()
+            new_task.pop(Task.Columns.RECIPIENT_NAME, None)
+            if task.recipient_name in self.tasks_list:
+                self.tasks_list[task.recipient_name].append(new_task)
+            else:
+                self.tasks_list[task.recipient_name] = [new_task]
+        print(self.tasks_list)
+
+    async def get_task_by_id(self, id: str, recipient: str):
         for i in range(len(self.tasks_list[recipient])):
             if self.tasks_list[recipient][i][TaskData.id] == id:
+                await self.bot.dbm.remove_task(id)
                 return self.tasks_list[recipient].pop(i)
         return None
 
@@ -113,7 +126,7 @@ class CoreModule:
 
         task: Dict[str, Any] = {}
 
-        task = self.get_task_by_id(task_result[TaskResultData.id], client_ip)
+        task = await self.get_task_by_id(task_result[TaskResultData.id], client_ip)
 
         if task is None:
             await self.bot.send_err(task[TaskData.id_session])
@@ -207,6 +220,8 @@ class CoreModule:
         else:
             self.tasks_list[recipient.name] = [task]
         logger.info(f"[INFO][CoreModule] New task:\n{task}")
+        task[Task.Columns.RECIPIENT_NAME] = recipient.name
+        await self.bot.dbm.add_task(task)
 
     def _setup_routes(self):
         self.app.router.add_get('/core/tasks', self.handle_get_tasks)

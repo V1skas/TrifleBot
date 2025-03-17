@@ -76,12 +76,14 @@ class Task(Base):
         ID_SESSION = "id_session"
         SESSION_PROVIDER = "session_provider"
         DATA = "data"
+        RECIPIENT_NAME = "recipient_name"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    type: Mapped[int]
+    type: Mapped[str] = mapped_column(String(12))
     id_session: Mapped[str] = mapped_column(String(36))
     session_provider: Mapped[int]
     data: Mapped[dict] = mapped_column(JSON)
+    recipient_name: Mapped[str] = mapped_column(String(12))
 
     @classmethod
     def obj_from_dict(cls, data: dict):
@@ -89,7 +91,8 @@ class Task(Base):
                        type=data.get(cls.Columns.TYPE),
                        id_session=data.get(cls.Columns.ID_SESSION),
                        session_provider=data.get(cls.Columns.SESSION_PROVIDER),
-                       data=data.get(cls.Columns.DATA)
+                       data=data.get(cls.Columns.DATA),
+                       recipient_name=data.get(cls.Columns.RECIPIENT_NAME)
                        )
 
     def from_dict(self, data: Dict):
@@ -98,6 +101,7 @@ class Task(Base):
         self.id_session = data.get(self.Columns.ID_SESSION)
         self.session_provider = data.get(self.Columns.SESSION_PROVIDER)
         self.data = data.get(self.Columns.DATA)
+        self.recipient_name = data.get(self.Columns.RECIPIENT_NAME)
 
     def from_obj(self, obj: 'Task'):
         self.id = obj.id if obj.id is not None else self.id
@@ -105,10 +109,12 @@ class Task(Base):
         self.id_session = obj.id_session if obj.id_session is not None else self.id_session
         self.session_provider = obj.session_provider if obj.session_provider is not None else self.session_provider
         self.data = obj.data if obj.data is not None else self.data
+        self.recipient_name = obj.recipient_name if obj.recipient_name is not None else self.recipient_name
 
     def dict(self):
         return {self.Columns.ID: self.id,
                 self.Columns.TYPE: self.type,
                 self.Columns.ID_SESSION: self.id_session,
                 self.Columns.SESSION_PROVIDER: self.session_provider,
-                self.Columns.DATA: self.data}
+                self.Columns.DATA: self.data,
+                self.Columns.RECIPIENT_NAME: self.recipient_name}

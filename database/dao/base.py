@@ -1,5 +1,5 @@
 from typing import Any, TypeVar, Generic, List, Dict
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.base import Base
@@ -62,3 +62,10 @@ class BaseDAO(Generic[T]):
         records = result.scalars().all()
         print(records)
         return records
+    
+    @classmethod
+    async def remove_one(cls, pk: Any, session: AsyncSession):
+        stmt = stmt = delete(cls.model).where(cls.model.__table__.primary_key.columns[0] == pk)
+        await session.execute(stmt)
+        #obj = await session.get(cls.model, pk)
+        #await session.delete(obj)

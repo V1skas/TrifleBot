@@ -59,12 +59,17 @@ class DatabaseModule:
         return result
     
     @connection(commit=True)
-    async def add_task(self, instance: Task, session: AsyncSession):
+    async def add_task(self, instance: Any, session: AsyncSession):
         await TaskDAO.add(session, instance)
 
     @connection(commit=True)
     async def remove_task(self, id: str, session: AsyncSession):
-        pass
+        await TaskDAO.remove_one(id, session)
+
+    @connection()
+    async def get_all_tasks(self, session: AsyncSession):
+        list_tasks = await TaskDAO.get_all(session)
+        return list_tasks
 
     @connection()
     async def get_users_keys_map(self, session: AsyncSession):

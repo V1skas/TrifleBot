@@ -29,8 +29,11 @@ async def main():
     father_bot = FatherBot(core, dbm, {})
     logger.info("Load sessions..")
     await father_bot.load_sessions()
-    print(f"Loaded sessions:\n{father_bot.sessions}")
+    logger.info(f"Loaded sessions:\n{father_bot.sessions}")
     core.bot = father_bot
+    logger.info("Load tasks...")
+    await core.load_tasks()
+    logger.info(f"Tasks loaded:\n{core.tasks_list}")
     logger.info("Init telegram bot..")
     tg_bot = TelegramBot(settings.TOKEN_TG_BOT, father_bot)
     father_bot.bots[SessionProviders.telegram] = tg_bot

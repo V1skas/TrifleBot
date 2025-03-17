@@ -103,9 +103,9 @@ class FatherBot(CoreModuleLisener):
         #    print(f"[Info] Action handler don`t find. session_id: {session_id}")
 
     async def task_complete(self, task: Dict[str, Any], result_task: Dict[str, Any]):
+        await self.task_result_handlers[task[TaskData.type]](result_task, task[TaskData.id_session], task[TaskData.session_provider])
         logger.info(f"[INFO][FatherBot] Call task_complete for user: [{self.sessions[task[TaskData.id_session]][Session.Columns.PHONE_NUMBER]}]"
               f"[{task[TaskData.id_session]}][{task[TaskData.session_provider]}]")
-        await self.task_result_handlers[task[TaskData.type]](result_task, task[TaskData.id_session], task[TaskData.session_provider])
 
     async def send_mes(self, phone_number: str, message: str):
         logger.info(f"[INFO][FatherBot] Call send for user: {phone_number}")
@@ -147,13 +147,12 @@ class FatherBot(CoreModuleLisener):
                                                                                           [])
 
     async def _auth_handler(self, action: MenuItem, session_id: str, session_provider: int, data: Any):
-        print(session_id)
-        print(self.sessions)
         self.sessions[session_id] = {Session.Columns.ID_SESSION: session_id,
                                      Session.Columns.CURRENT_ACTION: UserActions.auth,
                                      Session.Columns.CURRENT_STATE: SessionStates.waiting_process_query,
                                      Session.Columns.SESSION_PROVIDER: session_provider,
                                      Session.Columns.PHONE_NUMBER: str(data.get(BotsData.phone_number))}
+        await self.dbm.add_session(self.sessions[session_id])
         logger.info(
             f"[INFO][FatherBot] Call _auth_handler for user: [{self.sessions[session_id][Session.Columns.PHONE_NUMBER]}]"
             f"[{session_id}][{session_provider}]")
@@ -257,8 +256,6 @@ class FatherBot(CoreModuleLisener):
         await self.bots[session_provider].send(session_id, "Головне меню", menu_items[MenuPages.main])
 
     async def _auth_complete_handler(self, data: Dict[str, Any], session_id: str, session_provider: int):
-        logger.info(f"[INFO][FatherBot] Call _auth_complete_handler for user: [{self.sessions[session_id][Session.Columns.PHONE_NUMBER]}]"
-              f"[{session_id}][{session_provider}]")
         if data.get("auth") is None or data.get("auth") is False:
             self.sessions.pop(session_id)
             await self.bots[session_provider].send(session_id, "Клієнта з таким номером телефону не знайдено.\n\n"
@@ -275,10 +272,12 @@ class FatherBot(CoreModuleLisener):
         self.sessions[session_id][Session.Columns.CURRENT_ACTION] = UserActions.complete
         self.sessions[session_id][Session.Columns.CURRENT_MENU] = MenuPages.main
         self.sessions[session_id][Session.Columns.CURRENT_STATE] = SessionStates.free
-        await self.dbm.add_session(self.sessions[session_id])
+        await self.dbm.update_session(Session.obj_from_dict(self.sessions[session_id]))
         await self.bots[session_provider].send(session_id, "Верифіковано!\n\n"
                                                            "Усі доступні функції бота можна викликати у меню знизу.",
                                                menu_items[MenuPages.main])
+        logger.info(f"[INFO][FatherBot] Call _auth_complete_handler for user: [{self.sessions[session_id][Session.Columns.PHONE_NUMBER]}]"
+              f"[{session_id}][{session_provider}]")
 
     async def _get_order_list_complete_handler(self, data: Dict[str, Any], session_id: str, session_provider: int):
         logger.info(f"[INFO][FatherBot] Call _get_order_list_complete_handler for user: [{self.sessions[session_id][Session.Columns.PHONE_NUMBER]}]"

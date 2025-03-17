@@ -66,8 +66,9 @@ class TelegramBot(AbstractBot):
 @dp.message(Command("start"))
 async def com_start(message: Message):
     global father
-    father.sessions[str(message.from_user.id)][Session.Columns.USER_KEYS_MAP] = {}
-    await father.dbm.update_user_keys_map(str(message.from_user.id), father.sessions[str(message.from_user.id)][Session.Columns.USER_KEYS_MAP])
+    if str(message.from_user.id) in father.sessions:
+        father.sessions[str(message.from_user.id)][Session.Columns.USER_KEYS_MAP] = {}
+        await father.dbm.update_user_keys_map(str(message.from_user.id), father.sessions[str(message.from_user.id)][Session.Columns.USER_KEYS_MAP])
     keyboard = ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text="Далі",
                                                                    request_contact=True)]], resize_keyboard=True)
     await message.answer("Для роботи з ботом підтримки Трайфл, необхідно підтвердити Ваші контактні дані "
