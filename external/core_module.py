@@ -86,9 +86,8 @@ class CoreModule:
 
         if list_t is None:
             logger.info("Queue tasks empty.")
-            return web.json_response({CoreModuleResponseData.success: False,
-                                      CoreModuleResponseData.err_code: ListErrors.task_queue_empty,
-                                      CoreModuleResponseData.message: "Queue tasks empty.",
+            return web.json_response({CoreModuleResponseData.success: True,
+                                      CoreModuleResponseData.data: [],
                                       CoreModuleResponseData.task_in_queue: 0})
 
         if count > len(list_t):

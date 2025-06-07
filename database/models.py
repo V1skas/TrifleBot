@@ -79,7 +79,7 @@ class Task(Base):
         RECIPIENT_NAME = "recipient_name"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    type: Mapped[str] = mapped_column(String(12))
+    type: Mapped[str] = mapped_column(String(20))
     id_session: Mapped[str] = mapped_column(String(36))
     session_provider: Mapped[int]
     data: Mapped[dict] = mapped_column(JSON)

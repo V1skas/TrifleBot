@@ -18,6 +18,9 @@ def calculate_payment(monthly_price, balance):
     if monthly_price is None or balance is None:
         return None
 
+    monthly_price = float(monthly_price)
+    balance = float(balance)
+
     today = date.today()
     days_in_month = calendar.monthrange(today.year, today.month)[1]
     day_of_month = today.day
@@ -55,7 +58,9 @@ class MsgFormatter:
         return (f"Номер договору: {data.get(BalanceData.number, 'None')}\n"
                 f"Тариф: {data.get(BalanceData.tariff, 'None')}\n\n"
                 f"Поточний баланс: {data.get(BalanceData.balance, 'None')}\n"
-                f"Рекомендована сума поповнення: {calculate_payment(data.get(BalanceData.tariff, None), data.get(BalanceData.balance, None))}\n\n"
+                f"Статус: {data.get(BalanceData.status, 'None')}\n"
+                #f"Рекомендована сума поповнення: {calculate_payment(data.get(BalanceData.tariff, None), data.get(BalanceData.balance, None))}\n\n"
+                f"---------------------------------------\n"
                 f"Ідентифікатор о/р: {data.get(BalanceData.id_ls, 'None')}\n"
                 f"Компанія виконавець: {data.get(BalanceData.company, 'None')}\n"
                 f"Реквізити: {data.get(BalanceData.details, 'None')}")
@@ -104,28 +109,28 @@ class FatherBot(CoreModuleLisener):
 
     async def task_complete(self, task: Dict[str, Any], result_task: Dict[str, Any]):
         await self.task_result_handlers[task[TaskData.type]](result_task, task[TaskData.id_session], task[TaskData.session_provider])
-        logger.info(f"[INFO][FatherBot] Call task_complete for user: [{self.sessions[task[TaskData.id_session]][Session.Columns.PHONE_NUMBER]}]"
-              f"[{task[TaskData.id_session]}][{task[TaskData.session_provider]}]")
+        #logger.info(f"[INFO][FatherBot] Call task_complete for user: [{self.sessions[task[TaskData.id_session]][Session.Columns.PHONE_NUMBER]}]"
+        #      f"[{task[TaskData.id_session]}][{task[TaskData.session_provider]}]")
 
     async def send_mes(self, phone_number: str, message: str):
         logger.info(f"[INFO][FatherBot] Call send for user: {phone_number}")
         for _, value in self.sessions.items():
             if value[Session.Columns.PHONE_NUMBER] is phone_number:
                 await self.bots[value[Session.Columns.SESSION_PROVIDER]].send(value[Session.Columns.ID_SESSION],
-                                                                              message, menu_items[MenuPages.main])
+                                                                              message, menu_items[MenuPages.empty])
 
     async def send_many(self, phone_numbers: List[str], message: str):
         logger.info(f"[INFO][FatherBot] Call send_many")
         for _, value in self.sessions.items():
             if value[Session.Columns.PHONE_NUMBER] in phone_numbers:
                 await self.bots[value[Session.Columns.SESSION_PROVIDER]].send(value[Session.Columns.ID_SESSION],
-                                                                              message, menu_items[MenuPages.main])
+                                                                              message, menu_items[MenuPages.empty])
 
     async def send_all(self, message: str):
         logger.info(f"[INFO][FatherBot] Call send for all")
         for _, value in self.sessions.items():
             await self.bots[value[Session.Columns.SESSION_PROVIDER]].send(value[Session.Columns.ID_SESSION],
-                                                                          message, menu_items[MenuPages.main])
+                                                                          message, menu_items[MenuPages.empty])
 
     async def send_balance(self, phone_number: str, data: Dict[str, Any]):
         logger.info(f"[INFO][FatherBot] Call send_balance")
@@ -133,7 +138,7 @@ class FatherBot(CoreModuleLisener):
             if value[Session.Columns.PHONE_NUMBER] is phone_number:
                 await self.bots[value[Session.Columns.SESSION_PROVIDER]].send(value[Session.Columns.ID_SESSION],
                                                                               MsgFormatter.balance_data(data),
-                                                                              menu_items[MenuPages.main])
+                                                                              menu_items[MenuPages.empty])
 
     async def send_err(self, session_id: str):
         logger.info(f"[INFO][FatherBot] Call send_err for user: [{self.sessions[session_id][Session.Columns.PHONE_NUMBER]}]"
@@ -151,7 +156,8 @@ class FatherBot(CoreModuleLisener):
                                      Session.Columns.CURRENT_ACTION: UserActions.auth,
                                      Session.Columns.CURRENT_STATE: SessionStates.waiting_process_query,
                                      Session.Columns.SESSION_PROVIDER: session_provider,
-                                     Session.Columns.PHONE_NUMBER: str(data.get(BotsData.phone_number))}
+                                     Session.Columns.PHONE_NUMBER: str(data.get(BotsData.phone_number)),
+                                     Session.Columns.CURRENT_MENU: MenuPages.empty }
         await self.dbm.add_session(self.sessions[session_id])
         logger.info(
             f"[INFO][FatherBot] Call _auth_handler for user: [{self.sessions[session_id][Session.Columns.PHONE_NUMBER]}]"
@@ -240,7 +246,8 @@ class FatherBot(CoreModuleLisener):
             await self.core.add_task(CoreModule.Recipients.BOSS, {TaskData.type: TaskType.get_balance,
                                                                   TaskData.id_session: session_id,
                                                                   TaskData.session_provider: session_provider,
-                                                                  TaskData.data: {"order_number": action.name}})
+                                                                  TaskData.data: {"order_number": action.name,
+                                                                                  "phone_number": self.sessions[session_id][Session.Columns.PHONE_NUMBER]}})
 
         else:
             logger.warning(f"[ERROR][FatherBot] Uncorrect scenario for request _get_balance_handler.\n"
@@ -341,11 +348,16 @@ class FatherBot(CoreModuleLisener):
     async def _get_balance_complete_handler(self, data: Dict[str, Any], session_id: str, session_provider: int):
         logger.info(f"[INFO][FatherBot] Call _get_balance_complete_handler for user: [{self.sessions[session_id][Session.Columns.PHONE_NUMBER]}]"
               f"[{session_id}][{session_provider}]")
-        self.sessions[session_id][Session.Columns.CURRENT_ACTION] = UserActions.complete
-        self.sessions[session_id][Session.Columns.CURRENT_MENU] = MenuPages.main
-        self.sessions[session_id][Session.Columns.CURRENT_STATE] = SessionStates.free
+        self.sessions[session_id][Session.Columns.CURRENT_ACTION] = UserActions.get_balance
+        self.sessions[session_id][Session.Columns.CURRENT_MENU] = MenuPages.orders
+        self.sessions[session_id][Session.Columns.CURRENT_STATE] = SessionStates.waiting_process_query
         await self.dbm.update_session(Session.obj_from_dict(self.sessions[session_id]))
-        await self.bots[session_provider].send(session_id, MsgFormatter.balance_data(data), menu_items[MenuPages.main])
+        await self.bots[session_provider].send(session_id, MsgFormatter.balance_data(data), menu_items[MenuPages.orders])
+        await self.core.add_task(CoreModule.Recipients.BOSS, {TaskData.type: TaskType.get_list_orders,
+                                                                  TaskData.id_session: session_id,
+                                                                  TaskData.session_provider: session_provider,
+                                                                  TaskData.data: {"phone_number": self.sessions[session_id][
+                                                                                      Session.Columns.PHONE_NUMBER]}})
 
     async def check_work(self):
         print("Father bot work!")

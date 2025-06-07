@@ -116,3 +116,4 @@ class BalanceData:
     id_ls = "id_ls"
     company = "company"
     details = "details"
+    status = "status"
