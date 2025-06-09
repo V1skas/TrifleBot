@@ -272,7 +272,7 @@ class FatherBot(CoreModuleLisener):
                                                                     "         (067)-731-99-11,\n"
                                                                     "         (050)-731-99-11\n"
                                                                     "Пошта: accounts@trifle.net\n\n"
-                                                                    "Для повторної авторизації надішліть /auth.",
+                                                                    "Для повторної авторизації надішліть /start.",
                                                    menu_items[MenuPages.empty])
             return
 
