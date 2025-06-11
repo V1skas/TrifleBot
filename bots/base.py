@@ -23,7 +23,8 @@ menu_items: Dict[int, List[MenuItem]] = {MenuPages.empty: [],
                                                           #MenuItem("Сервіси/Пакети", UserActions.get_service_data),
                                                           MenuItem("Баланси", UserActions.get_balance)],
                                          MenuPages.orders: [MenuItem("<- Повернутись", UserActions.exit)],
-                                         MenuPages.services: [MenuItem("<- Повернутись", UserActions.exit)]}
+                                         MenuPages.services: [MenuItem("<- Повернутись", UserActions.exit)],
+                                         MenuPages.clear: None}
 
 
 class AbstractBot(abc.ABC):

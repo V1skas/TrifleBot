@@ -43,6 +43,18 @@ def calculate_payment(monthly_price, balance):
 
 class MsgFormatter:
     @classmethod
+    def markup_details(cls, data: str):
+        if data == "None":
+            return data
+        
+        mass = data.split(' ', maxsplit=2)
+        if len(mass) < 2:
+            return data
+        
+        mass[1] = f"<u><code>{mass[1]}</code></u>"
+        joined = ' '.join(mass)
+        return joined
+    @classmethod
     def order_data(cls, data: Dict[str, Any]):
         return (f"Номер договору: {data.get(OrderData.number, 'None')}\n"
                 f"Ідентифікатор о/р: {data.get(OrderData.id_ls, 'None')}\n"
@@ -61,9 +73,9 @@ class MsgFormatter:
                 f"Статус: {data.get(BalanceData.status, 'None')}\n"
                 #f"Рекомендована сума поповнення: {calculate_payment(data.get(BalanceData.tariff, None), data.get(BalanceData.balance, None))}\n\n"
                 f"---------------------------------------\n"
-                f"Ідентифікатор о/р: {data.get(BalanceData.id_ls, 'None')}\n"
+                f"Ідентифікатор о/р: <u><code>{data.get(BalanceData.id_ls, 'None')}</code></u>\n"
                 f"Компанія виконавець: {data.get(BalanceData.company, 'None')}\n"
-                f"Реквізити: {data.get(BalanceData.details, 'None')}")
+                f"Реквізити: {cls.markup_details(data.get(BalanceData.details, 'None'))}")
 
     @classmethod
     def error(self):
@@ -266,14 +278,15 @@ class FatherBot(CoreModuleLisener):
         if data.get("auth") is None or data.get("auth") is False:
             self.sessions.pop(session_id)
             await self.bots[session_provider].send(session_id, "Клієнта з таким номером телефону не знайдено.\n\n"
-                                                                    "Перевірте дані у власному кабінеті, або оновіть їх "
+                                                                    "Перевірте дані в особистому кабінеті, або оновіть їх "
                                                                     "зв'язавшись з відділом договорів:\n"
-                                                                    "Телефон: (056)-731-99-11,\n"
-                                                                    "         (067)-731-99-11,\n"
-                                                                    "         (050)-731-99-11\n"
-                                                                    "Пошта: accounts@trifle.net\n\n"
+                                                                    "Телефони: (056)-731-99-11,\n"
+                                                                    "                    (067)-731-99-11,\n"
+                                                                    "                    (050)-731-99-11\n"
+                                                                    "Пошта: accounts@trifle.net\n"
+                                                                    "Детальніше за посиланням: https://h.trifle.net/ua/news/connection_telegram_bot.html\n\n"
                                                                     "Для повторної авторизації надішліть /start.",
-                                                   menu_items[MenuPages.empty])
+                                                   menu_items[MenuPages.clear])
             return
 
         self.sessions[session_id][Session.Columns.CURRENT_ACTION] = UserActions.complete

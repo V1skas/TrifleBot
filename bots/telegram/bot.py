@@ -46,6 +46,9 @@ class TelegramBot(AbstractBot):
     async def send(self, session_id: str, msg: str, menu: List[MenuItem]):
         global bot
         global father
+        if menu is None:
+            await bot.send_message(session_id, msg, reply_markup=types.ReplyKeyboardRemove())
+            return
         if len(menu) > 0:
             builder = ReplyKeyboardBuilder()
             if father.sessions[session_id].get(Session.Columns.USER_KEYS_MAP) is not None:
@@ -56,7 +59,6 @@ class TelegramBot(AbstractBot):
                 builder.add(types.KeyboardButton(text=item.name))
                 father.sessions[session_id][Session.Columns.USER_KEYS_MAP][item.name] = item.index
             builder.adjust(2)
-            global bot
             await bot.send_message(session_id, msg, reply_markup=builder.as_markup(resize_keyboard=True))
             await father.dbm.update_user_keys_map(session_id, father.sessions[session_id][Session.Columns.USER_KEYS_MAP])
         else:
@@ -72,8 +74,10 @@ async def com_start(message: Message):
     keyboard = ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text="Далі",
                                                                    request_contact=True)]], resize_keyboard=True)
     await message.answer("Для роботи з ботом підтримки Трайфл, необхідно підтвердити Ваші контактні дані "
-                         "(Номер телефону).\n\n"
-                         "Для цього натисніть на кнопку \"Далі\".",
+                         "(номер телефону).\n\n"
+                         "<u><b>УВАГА!</b></u> Перевірте, щоб ці дані було внесено в поле <b>\"Месенджери\"</b> в особистому кабінеті.\n"
+                         "<u>Детальніше за посиланням</u>: https://h.trifle.net/ua/news/connection_telegram_bot.html\n\n"
+                         "Для підтвердження натисніть кнопку <b>\"Далі\"</b> і поділіться номером телефону.",
                          reply_markup=keyboard)
 
 

@@ -6,8 +6,9 @@ class MenuPages:
     empty = 0
     main = 1
     orders = 2
-    services = 3,
+    services = 3
     notification_settings = 4
+    clear = 5
 
 
 class UserActions:
